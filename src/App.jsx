@@ -12,80 +12,106 @@
 //     </>
 //   )
 // }
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import "./App.css";
 
-const states = ["Andhra Pradesh", "Maharashtra", "Tamil Nadu", "Punjab", "Karnataka"];
-const seasons = ["Kharif", "Rabi", "Summer", "Winter"];
+const states = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+  "Uttarakhand", "West Bengal"
+];
+
+const seasons = ["Kharif", "Rabi", "Zaid", "Summer", "Winter", "Autumn"];
+
+const cropImages = {
+  Rice: "https://media.istockphoto.com/photos/ripe-rice-in-the-field-of-farmland-picture-id622925154?k=20&m=622925154&s=612x612&w=0&h=hLtkpC3VdXeqWhblSowvPRu4XgsCwFW6JQM-Px2KzbY=",
+  Wheat: "https://www.worldatlas.com/r/w1200/upload/d8/f0/68/shutterstock-116527159.jpg",
+  Maize: "https://cdn.pixabay.com/photo/2014/02/23/13/08/maize-272886_1280.jpg",
+  Cotton: "http://xochil.com/wp-content/uploads/2014/08/west-texas-cotton-1361909.jpg",
+  Sugarcane: "http://2.bp.blogspot.com/-JF3giBXjtoQ/Um6WpCqwnBI/AAAAAAAAA3o/jbI9URai3l8/s1600/Main_Pic.jpg"}
+const rotatingImages = Object.values(cropImages);
 
 export default function App() {
   const [state, setState] = useState("");
   const [season, setSeason] = useState("");
-  const [prediction, setPrediction] = useState(null);
+  const [prediction, setPrediction] = useState("");
+  const [currentImage, setCurrentImage] = useState(rotatingImages[0]);
+  const [imageIndex, setImageIndex] = useState(0);
 
   const handlePredict = () => {
-    if (state && season) {
-      setPrediction("🌾 Suitable Crop: Rice");
-    } else {
-      setPrediction("⚠️ Please select both state and season.");
-    }
+    let crop = "Rice"; // default
+    if (season === "Rabi") crop = "Wheat";
+    if (season === "Summer") crop = "Maize";
+    if (state === "Punjab") crop = "Cotton";
+    if (state === "Uttar Pradesh") crop = "Sugarcane";
+
+    setPrediction(crop);
+    setCurrentImage(cropImages[crop]);
   };
 
+  useEffect(() => {
+    if (!prediction) {
+      const interval = setInterval(() => {
+        setImageIndex((prev) => (prev + 1) % rotatingImages.length);
+        setCurrentImage(rotatingImages[(imageIndex + 1) % rotatingImages.length]);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [imageIndex, prediction]);
+  
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 to-green-300 p-4">
-      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-xl">
-        <h1 className="text-3xl font-bold text-center text-green-800 mb-6">
-          Crop Prediction Model 🌱
-        </h1>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-lg font-medium text-gray-700">State</label>
-            <select
-              className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-              onChange={(e) => setState(e.target.value)}
-              value={state}
-            >
-              <option value="">Select a state</option>
+    <><header className="header">
+      <h1>🌾 Crop Prediction Model</h1>
+    </header><div className="container">
+        <div className="content">
+          <div className="left-box">
+            <h2>Enter Details</h2>
+            <label>State:</label>
+            <select value={state} onChange={(e) => setState(e.target.value)}>
+              <option value="">Select</option>
               {states.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
+                <option key={s} value={s}>{s}</option>
               ))}
             </select>
-          </div>
 
-          <div>
-            <label className="block text-lg font-medium text-gray-700">Season</label>
-            <select
-              className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-              onChange={(e) => setSeason(e.target.value)}
-              value={season}
-            >
-              <option value="">Select a season</option>
+            <label>Season:</label>
+            <select value={season} onChange={(e) => setSeason(e.target.value)}>
+              <option value="">Select</option>
               {seasons.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
+                <option key={s} value={s}>{s}</option>
               ))}
             </select>
+
+            <button onClick={handlePredict}>Predict Crop</button>
+
+            {prediction && <p className="prediction">🌾 Predicted Crop: <strong>{prediction}</strong></p>}
           </div>
 
-          <button
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md"
-            onClick={handlePredict}
-          >
-            Predict Crop
-          </button>
-
-          {prediction && (
-            <div className="mt-4 text-center text-xl font-semibold text-green-900">
-              {prediction}
-            </div>
-          )}
+          <div className="right-box">
+            <h2>Crop Image</h2>
+            <img src={currentImage}alt="Crop" className="crop-img"
+  onError={(e) => {
+    e.target.src = "https://via.placeholder.com/400x300?text=No+Image+Found";
+  }}
+/>
+          </div>
         </div>
       </div>
+      <div className="crop-gallery">
+  {Object.entries(cropImages).map(([crop, url]) => (
+    <div key={crop} className="crop-card">
+      <img src={url} alt={crop} />
+      <p>{crop}</p>
     </div>
+  ))}
+</div>
+
+</>
   );
 }
+
 
 // export default App
